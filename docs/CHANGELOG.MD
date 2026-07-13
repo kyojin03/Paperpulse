@@ -10,6 +10,7 @@ All notable changes to PaperPulse are documented in this file.
 - Added keyboard-accessible row detail modal and responsive sticky table headers.
 - Improved the visual hierarchy, institutional styling, mobile layout, and reduced-motion support.
 - Updated README, design notes, deployment guide, and release checklist for Version 2.0.
+- Refined released-document expansion into an incremental Load More control and labelled the dashboard synchronization time explicitly.
 
 ## 1.0.0 - 2026-07-13
 
