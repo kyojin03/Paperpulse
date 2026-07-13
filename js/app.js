@@ -1,0 +1,1 @@
+(() => { async function start() { window.PaperPulseSearch.init(); try { const response = await window.PaperPulseApi.stats(); window.PaperPulseUi.renderStats(response.data, response.updatedAt); } catch { window.PaperPulseUi.renderStats({}, null); } } document.addEventListener('DOMContentLoaded', start); })();
