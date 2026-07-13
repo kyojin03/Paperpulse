@@ -7,6 +7,7 @@ const PAPERPULSE = Object.freeze({
   STATUSES: ['Received', 'For Signature', 'Signed', 'Released'],
   MAX_QUERY_LENGTH: 120,
   MAX_SUGGESTIONS: 6,
+  MAX_LIST_RECORDS: 100,
   CACHE_SECONDS: 120,
   TIME_ZONE: 'Asia/Manila'
 });
@@ -21,7 +22,8 @@ function doGet(event) {
     if (action === 'lookup') payload = lookup_(parameters.q);
     else if (action === 'suggestions') payload = suggestions_(parameters.q);
     else if (action === 'stats') payload = statistics_();
-    else return json_({ success: false, error: 'Unsupported action. Use lookup, suggestions, or stats.' }, callback);
+    else if (action === 'list') payload = list_(parameters.limit);
+    else return json_({ success: false, error: 'Unsupported action. Use lookup, suggestions, stats, or list.' }, callback);
     return json_({ success: true, data: payload, updatedAt: new Date().toISOString() }, callback);
   } catch (error) {
     console.error(error && error.stack ? error.stack : error);
@@ -55,6 +57,13 @@ function statistics_() {
   return counts;
 }
 
+/** Returns newest complete records for the public dashboard without changing existing endpoints. */
+function list_(limit) {
+  const requested = Number(limit || PAPERPULSE.MAX_LIST_RECORDS);
+  const maximum = Number.isFinite(requested) ? Math.min(Math.max(Math.floor(requested), 1), PAPERPULSE.MAX_LIST_RECORDS) : PAPERPULSE.MAX_LIST_RECORDS;
+  return readRecords_().sort((left, right) => sortTimestamp_(right.lastUpdated) - sortTimestamp_(left.lastUpdated)).slice(0, maximum);
+}
+
 /** Reads, validates, and normalizes the configured sheet. Results are cached briefly. */
 function readRecords_() {
   const cache = CacheService.getScriptCache();
@@ -80,7 +89,7 @@ function normalizeRecord_(headers, row) {
   return {
     trackingNumber: text_(source['Tracking Number']), subject: text_(source.Subject), requestingOffice: text_(source['Requesting Office']),
     dateReceived: date_(source['Date Received']), dateSigned: date_(source['Date Signed']), status: text_(source.Status),
-    remarks: text_(source.Remarks), lastUpdated: date_(source['Last Updated'])
+    remarks: text_(source.Remarks), lastUpdated: dateTime_(source['Last Updated'])
   };
 }
 
@@ -93,6 +102,8 @@ function validateQuery_(query) {
 
 function text_(value) { return String(value === null || value === undefined ? '' : value).trim(); }
 function date_(value) { return value instanceof Date ? Utilities.formatDate(value, PAPERPULSE.TIME_ZONE, 'yyyy-MM-dd') : text_(value); }
+function dateTime_(value) { return value instanceof Date ? Utilities.formatDate(value, PAPERPULSE.TIME_ZONE, "yyyy-MM-dd'T'HH:mm:ss") : text_(value); }
+function sortTimestamp_(value) { const timestamp = Date.parse(value); return Number.isNaN(timestamp) ? 0 : timestamp; }
 function validCallback_(value) { return /^[A-Za-z_$][0-9A-Za-z_$]{0,80}$/.test(String(value || '')) ? String(value) : ''; }
 function json_(payload, callback) {
   const body = JSON.stringify(payload);

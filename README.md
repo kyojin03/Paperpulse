@@ -1,12 +1,16 @@
 # OVPAA PaperPulse
 
-PaperPulse is the public document-status monitor for the Office of the Vice President for Academic Affairs (OVPAA) at Good Samaritan Colleges. Faculty and employees can search a tracking number or subject to see the latest status recorded by OVPAA. Only designated OVPAA staff edit the Google Sheet.
+PaperPulse 2.0 is the daily document-status dashboard for the Office of the Vice President for Academic Affairs (OVPAA) at Good Samaritan Colleges. Faculty, employees, department heads, and office staff can see current activity before searching. Only designated OVPAA staff edit the Google Sheet.
 
 ## Features
 
 - Partial matching by tracking number or subject
 - Keyboard-accessible autocomplete suggestions
 - Live counts for Received, For Signature, Signed, and Released documents
+- Recently released and in-progress dashboards with client-side filtering
+- Clickable, keyboard-accessible record details modal
+- Refresh control, timestamp, row counters, skeleton loading, and scroll-to-top control
+- Session-cached dashboard records to reduce repeat API calls
 - Responsive, accessible vanilla HTML/CSS/JavaScript interface
 - Google Apps Script API backed by a private Google Sheet
 - GitHub Pages-ready static hosting
@@ -16,7 +20,7 @@ PaperPulse is the public document-status monitor for the Office of the Vice Pres
 ```
 index.html                  Public application
 css/                        Base, motion, and responsive styles
-js/                         Configuration, API, UI, and search modules
+js/                         Configuration, API, dashboard, UI, and search modules
 backend/GoogleAppsScript.js Google Apps Script Web App source
 backend/appsscript.json     Apps Script deployment manifest
 backend/GoogleSheetTemplate.xlsx Import-ready register template
@@ -37,6 +41,12 @@ To begin the register, upload [GoogleSheetTemplate.xlsx](backend/GoogleSheetTemp
 ## Status values
 
 The register accepts `Received`, `For Signature`, `Signed`, and `Released`. Use these exact values so the summary cards remain accurate.
+
+## API actions
+
+The deployed Apps Script Web App keeps the compatible `lookup`, `suggestions`, and `stats` actions. Version 2 adds `list`, which returns complete recent records for the dashboard. The browser loads these records once per short session cache period, then filters them locally.
+
+An admin page can later use the same normalized record contract without changing the public backend. Keep administrative write operations in a separately authenticated future deployment.
 
 ## Support
 

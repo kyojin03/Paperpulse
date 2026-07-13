@@ -15,7 +15,7 @@ Follow the operating rules in [GOOGLE_SHEETS.md](GOOGLE_SHEETS.md). Share the Sh
    - `PAPERPULSE_SHEET_NAME`: the exact worksheet tab name.
 4. Select **Deploy → New deployment → Web app**. Execute as the deploying account and set access to **Anyone**. Authorize the requested Google Sheets scope.
 5. Copy the Web App URL ending in `/exec`. Never use the editor `/dev` URL for the public site.
-6. Test these three endpoints in a browser: append `?action=stats`, `?action=lookup&q=` followed by a known tracking number, and `?action=suggestions&q=` followed by two or more known characters. Every response must contain `"success":true`.
+6. Test the four endpoints in a browser: append `?action=stats`, `?action=lookup&q=` followed by a known tracking number, `?action=suggestions&q=` followed by two or more known characters, and `?action=list`. Every response must contain `"success":true`.
 
 Redeploy after every Apps Script code change. Retain the same deployment when possible so the public URL remains stable.
 
@@ -36,8 +36,8 @@ The API URL is expected to be public because the search tool is public. Sheet ac
 
 - The worksheet has the exact headers and no duplicate tracking numbers.
 - Script Properties are set and are not committed to Git.
-- The `/exec` endpoint returns JSON for all three actions.
-- A search works from the GitHub Pages URL on desktop and mobile.
+- The `/exec` endpoint returns JSON for `lookup`, `suggestions`, `stats`, and `list`.
+- A search, dashboard filtering, table row detail dialog, and Refresh control work from the GitHub Pages URL on desktop and mobile.
 - The four card counts match the sheet.
 - Browser console has no JavaScript or network errors.
 - OVPAA has an owner for sheet updates and API redeployments.

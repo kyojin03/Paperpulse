@@ -2,6 +2,15 @@
 
 All notable changes to PaperPulse are documented in this file.
 
+## 2.0.0 - 2026-07-13
+
+- Added an institutional dashboard with recently released and in-progress document registers.
+- Added a backward-compatible `list` Apps Script API action for complete recent dashboard records.
+- Added short-lived session caching, local table filtering, refresh control, timestamps, row counters, skeleton states, empty states, and scroll-to-top control.
+- Added keyboard-accessible row detail modal and responsive sticky table headers.
+- Improved the visual hierarchy, institutional styling, mobile layout, and reduced-motion support.
+- Updated README, design notes, deployment guide, and release checklist for Version 2.0.
+
 ## 1.0.0 - 2026-07-13
 
 - Built the accessible responsive public document-status interface.

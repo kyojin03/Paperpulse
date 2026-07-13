@@ -4,5 +4,7 @@ window.PaperPulseConfig = Object.freeze({
   requestTimeoutMs: 15000,
   suggestionDelayMs: 250,
   minSuggestionLength: 2,
-  maxSuggestions: 6
+  maxSuggestions: 6,
+  dashboardCacheMs: 120000,
+  dashboardRecordLimit: 100
 });

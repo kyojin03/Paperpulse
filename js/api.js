@@ -30,5 +30,5 @@ window.PaperPulseApi = (() => {
       try { const url = endpoint(action, parameters); url.searchParams.set('callback', callback); script.src = url.toString(); script.async = true; script.onerror = () => cleanup(new Error('The status service could not be reached.')); document.head.append(script); } catch (error) { cleanup(error); }
     });
   }
-  return { lookup: (query) => request('lookup', { q: query }), suggestions: (query) => request('suggestions', { q: query }), stats: () => request('stats') };
+  return { lookup: (query) => request('lookup', { q: query }), suggestions: (query) => request('suggestions', { q: query }), stats: () => request('stats'), list: (limit) => request('list', { limit }) };
 })();

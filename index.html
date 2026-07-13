@@ -3,78 +3,28 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Check the progress of documents submitted to the Office of the Vice President for Academic Affairs.">
+  <meta name="description" content="OVPAA PaperPulse is the document status monitoring dashboard of Good Samaritan Colleges.">
   <meta name="theme-color" content="#0B3B91">
   <title>OVPAA PaperPulse | Good Samaritan Colleges</title>
   <link rel="icon" href="assets/images/logo.png" type="image/png">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" referrerpolicy="no-referrer">
-  <link rel="stylesheet" href="css/style.css">
-  <link rel="stylesheet" href="css/animations.css">
-  <link rel="stylesheet" href="css/responsive.css">
+  <link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/animations.css"><link rel="stylesheet" href="css/responsive.css">
 </head>
 <body>
   <a class="skip-link" href="#document-search">Skip to document search</a>
-  <header class="hero" aria-labelledby="page-title">
-    <div class="hero__pattern" aria-hidden="true"></div>
-    <div class="hero__content container">
-      <img class="school-logo" src="assets/images/logo.png" alt="Good Samaritan Colleges logo">
-      <p class="eyebrow"><i class="fa-solid fa-building-columns" aria-hidden="true"></i> Good Samaritan Colleges</p>
-      <p class="office-name">Office of the Vice President for Academic Affairs</p>
-      <h1 id="page-title">OVPAA PaperPulse</h1>
-      <p class="hero__subtitle">Document Status Monitoring System</p>
-      <p class="hero__tagline">Know the status before you go.</p>
-    </div>
-  </header>
+  <header class="hero" aria-labelledby="page-title"><div class="hero__pattern" aria-hidden="true"></div><div class="hero__content container"><img class="school-logo" src="assets/images/logo.png" alt="Good Samaritan Colleges logo"><p class="eyebrow"><i class="fa-solid fa-building-columns" aria-hidden="true"></i> Good Samaritan Colleges</p><p class="office-name">Office of the Vice President for Academic Affairs</p><h1 id="page-title">OVPAA PaperPulse</h1><p class="hero__subtitle">Document Status Monitoring System</p><p class="hero__tagline">Know the Status Before You Go.</p></div></header>
   <main>
-    <section id="document-search" class="search-section container" aria-labelledby="search-heading">
-      <div class="search-card">
-        <div class="section-heading">
-          <span class="icon-circle" aria-hidden="true"><i class="fa-solid fa-magnifying-glass"></i></span>
-          <div><h2 id="search-heading">Search for a document</h2><p>Use a tracking number or any part of the document subject.</p></div>
-        </div>
-        <form id="searchForm" class="search-form" role="search" novalidate>
-          <label class="sr-only" for="searchInput">Tracking number or document subject</label>
-          <div class="search-input-wrap">
-            <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
-            <input id="searchInput" name="query" type="search" autocomplete="off" spellcheck="false" placeholder="e.g., OVPAA-2026-001 or Purchase Request" aria-autocomplete="list" aria-controls="suggestions" aria-expanded="false">
-            <button id="clearSearch" class="clear-button" type="button" aria-label="Clear search" hidden><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
-          </div>
-          <button id="searchButton" class="button button--primary" type="submit"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><span>Search</span></button>
-          <ul id="suggestions" class="suggestions" role="listbox" aria-label="Search suggestions" hidden></ul>
-        </form>
-        <p id="searchHelp" class="form-help">Only documents recorded by OVPAA are shown. Searches are not saved.</p>
-      </div>
-    </section>
-    <section class="summary-section container" aria-labelledby="summary-heading">
-      <div class="section-title-row"><div><p class="section-kicker">Current register</p><h2 id="summary-heading">Document summary</h2></div><p id="statsUpdated" class="updated-text" aria-live="polite"></p></div>
-      <div id="summaryCards" class="summary-grid" aria-busy="true">
-        <article class="summary-card summary-card--received"><i class="fa-solid fa-inbox" aria-hidden="true"></i><p>Received</p><strong id="receivedCount">—</strong></article>
-        <article class="summary-card summary-card--signature"><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i><p>For Signature</p><strong id="signatureCount">—</strong></article>
-        <article class="summary-card summary-card--signed"><i class="fa-solid fa-circle-check" aria-hidden="true"></i><p>Signed</p><strong id="signedCount">—</strong></article>
-        <article class="summary-card summary-card--released"><i class="fa-solid fa-box-open" aria-hidden="true"></i><p>Released</p><strong id="releasedCount">—</strong></article>
-      </div>
-    </section>
-    <section class="results-section container" aria-labelledby="result-heading">
-      <h2 id="result-heading" class="sr-only">Search result</h2>
-      <div id="loadingState" class="state-card" hidden><span class="spinner" aria-hidden="true"></span><p>Looking up your document…</p></div>
-      <div id="emptyState" class="state-card"><i class="fa-regular fa-folder-open" aria-hidden="true"></i><h2>Find your document status</h2><p>Enter a tracking number or subject above to view the latest update from OVPAA.</p></div>
-      <div id="notFoundState" class="state-card" hidden><i class="fa-regular fa-face-frown" aria-hidden="true"></i><h2>No documents found</h2><p>Check the spelling or tracking number, then try again. For assistance, please contact OVPAA.</p></div>
-      <div id="errorState" class="state-card state-card--error" hidden><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i><h2>We could not load the register</h2><p id="errorMessage">Please check your connection and try again.</p><button id="retryButton" class="button button--secondary" type="button">Try again</button></div>
-      <article id="resultCard" class="result-card" hidden aria-live="polite">
-        <div class="result-card__top"><div><p class="section-kicker">Document status</p><h2 id="documentSubject"></h2></div><span id="statusBadge" class="status-badge"></span></div>
-        <dl class="details-grid">
-          <div><dt>Tracking Number</dt><dd id="trackingNumber"></dd></div><div><dt>Requesting Office</dt><dd id="office"></dd></div>
-          <div><dt>Date Received</dt><dd id="receivedDate"></dd></div><div><dt>Date Signed</dt><dd id="signedDate"></dd></div>
-          <div><dt>Last Updated</dt><dd id="lastUpdated"></dd></div><div class="details-grid__full"><dt>Remarks</dt><dd id="remarks"></dd></div>
-        </dl>
-      </article>
-    </section>
+    <section id="document-search" class="search-section container" aria-labelledby="search-heading"><div class="search-card"><div class="section-heading"><span class="icon-circle" aria-hidden="true"><i class="fa-solid fa-magnifying-glass"></i></span><div><h2 id="search-heading">Search the document register</h2><p>Search by tracking number or any part of the document subject.</p></div></div><form id="searchForm" class="search-form" role="search" novalidate><label class="sr-only" for="searchInput">Tracking number or document subject</label><div class="search-input-wrap"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><input id="searchInput" name="query" type="search" autocomplete="off" spellcheck="false" placeholder="e.g., OVPAA-2026-001 or Purchase Request" aria-autocomplete="list" aria-controls="suggestions" aria-expanded="false"><button id="clearSearch" class="clear-button" type="button" aria-label="Clear search" hidden><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></div><button id="searchButton" class="button button--primary" type="submit"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><span>Search</span></button><ul id="suggestions" class="suggestions" role="listbox" aria-label="Search suggestions" hidden></ul></form><p class="form-help">Typing filters the dashboard immediately. Searches are not saved.</p></div></section>
+    <section class="summary-section container" aria-labelledby="summary-heading"><div class="section-title-row"><div><p class="section-kicker">Daily register overview</p><h2 id="summary-heading">Document summary</h2></div><div class="dashboard-actions"><p id="statsUpdated" class="updated-text" aria-live="polite"></p><button id="refreshButton" class="button button--tertiary" type="button"><i class="fa-solid fa-rotate" aria-hidden="true"></i> Refresh</button></div></div><div id="summaryCards" class="summary-grid" aria-busy="true"><article class="summary-card summary-card--received"><i class="fa-solid fa-inbox" aria-hidden="true"></i><p>Received</p><strong id="receivedCount">-</strong></article><article class="summary-card summary-card--signature"><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i><p>For Signature</p><strong id="signatureCount">-</strong></article><article class="summary-card summary-card--signed"><i class="fa-solid fa-circle-check" aria-hidden="true"></i><p>Signed</p><strong id="signedCount">-</strong></article><article class="summary-card summary-card--released"><i class="fa-solid fa-box-open" aria-hidden="true"></i><p>Released</p><strong id="releasedCount">-</strong></article></div></section>
+    <section class="dashboard-section container" aria-label="Document dashboard"><div class="dashboard-status" id="dashboardStatus" role="status" aria-live="polite"></div><article class="dashboard-panel"><div class="panel-heading"><div><p class="section-kicker">Completed documents</p><h2>Recently Released Documents</h2></div><p id="releasedCounter" class="row-counter"></p></div><div id="releasedTableLoading" class="table-skeleton" aria-label="Loading recently released documents"><span></span><span></span><span></span><span></span></div><div id="releasedEmpty" class="table-empty" hidden><i class="fa-regular fa-folder-open" aria-hidden="true"></i><p>No released documents match this search.</p></div><div class="table-scroll" id="releasedTableWrap" hidden><table><thead><tr><th>Tracking Number</th><th>Subject</th><th>Requesting Office</th><th>Date Signed</th><th>Last Updated</th><th><span class="sr-only">View details</span></th></tr></thead><tbody id="releasedTableBody"></tbody></table></div><div class="panel-footer"><button id="viewMoreReleased" class="button button--secondary" type="button" hidden>View More</button></div></article>
+      <article class="dashboard-panel"><div class="panel-heading"><div><p class="section-kicker">Active workflow</p><h2>Documents In Progress</h2></div><p id="progressCounter" class="row-counter"></p></div><div id="progressTableLoading" class="table-skeleton" aria-label="Loading documents in progress"><span></span><span></span><span></span><span></span></div><div id="progressEmpty" class="table-empty" hidden><i class="fa-regular fa-folder-open" aria-hidden="true"></i><p>No in-progress documents match this search.</p></div><div class="table-scroll" id="progressTableWrap" hidden><table><thead><tr><th>Tracking Number</th><th>Subject</th><th>Requesting Office</th><th>Status</th><th>Last Updated</th><th><span class="sr-only">View details</span></th></tr></thead><tbody id="progressTableBody"></tbody></table></div></article></section>
+    <section class="results-section container" aria-labelledby="result-heading"><h2 id="result-heading" class="sr-only">Search result</h2><div id="loadingState" class="state-card" hidden><span class="spinner" aria-hidden="true"></span><p>Looking up your document...</p></div><div id="emptyState" class="state-card"><i class="fa-regular fa-folder-open" aria-hidden="true"></i><h2>Find your document status</h2><p>Enter a tracking number or subject above to view its latest OVPAA update.</p></div><div id="notFoundState" class="state-card" hidden><i class="fa-regular fa-face-frown" aria-hidden="true"></i><h2>No documents found</h2><p>Check the spelling or tracking number, then try again. For assistance, contact OVPAA.</p></div><div id="errorState" class="state-card state-card--error" hidden><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i><h2>We could not load the register</h2><p id="errorMessage">Please check your connection and try again.</p><button id="retryButton" class="button button--secondary" type="button">Try again</button></div><article id="resultCard" class="result-card" hidden aria-live="polite"><div class="result-card__top"><div><p class="section-kicker">Search result</p><h2 id="documentSubject"></h2></div><span id="statusBadge" class="status-badge"></span></div><dl class="details-grid"><div><dt>Tracking Number</dt><dd id="trackingNumber"></dd></div><div><dt>Requesting Office</dt><dd id="office"></dd></div><div><dt>Date Received</dt><dd id="receivedDate"></dd></div><div><dt>Date Signed</dt><dd id="signedDate"></dd></div><div><dt>Last Updated</dt><dd id="lastUpdated"></dd></div><div class="details-grid__full"><dt>Remarks</dt><dd id="remarks"></dd></div></dl></article></section>
   </main>
-  <footer><div class="container footer-content"><div><h2>OVPAA PaperPulse</h2><p>Office of the Vice President for Academic Affairs</p><p>Good Samaritan Colleges</p></div><div class="footer-credit"><p>Designed &amp; Developed by</p><strong>Piolo Bernardino</strong><p>LMS Associate &amp; Systems Support</p></div></div></footer>
+  <div id="detailModal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="modalTitle"><div class="modal__backdrop" data-close-modal></div><div class="modal__content" role="document"><button id="closeModal" class="modal__close" type="button" aria-label="Close document details"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button><p class="section-kicker">Document details</p><h2 id="modalTitle"></h2><span id="modalStatus" class="status-badge"></span><dl class="details-grid modal__details"><div><dt>Tracking Number</dt><dd id="modalTracking"></dd></div><div><dt>Requesting Office</dt><dd id="modalOffice"></dd></div><div><dt>Date Received</dt><dd id="modalReceived"></dd></div><div><dt>Date Signed</dt><dd id="modalSigned"></dd></div><div><dt>Last Updated</dt><dd id="modalUpdated"></dd></div><div class="details-grid__full"><dt>Remarks</dt><dd id="modalRemarks"></dd></div></dl></div></div>
+  <button id="scrollTop" class="scroll-top" type="button" aria-label="Scroll to top" hidden><i class="fa-solid fa-arrow-up" aria-hidden="true"></i></button>
+  <footer><div class="container footer-content"><div><h2>OVPAA PaperPulse</h2><p>Office of the Vice President for Academic Affairs</p><p>Good Samaritan Colleges</p></div><div class="footer-credit"><p>Designed &amp; Developed by</p><strong>Piolo Bernardino</strong><p>LMS Associate &amp; Systems Support</p><p>Version 2.0</p></div></div></footer>
   <noscript><div class="noscript">PaperPulse needs JavaScript enabled to search the document register.</div></noscript>
-  <script src="js/config.js"></script><script src="js/utils.js"></script><script src="js/api.js"></script><script src="js/ui.js"></script><script src="js/search.js"></script><script src="js/app.js"></script>
-</body>
-</html>
+  <script src="js/config.js"></script><script src="js/utils.js"></script><script src="js/api.js"></script><script src="js/ui.js"></script><script src="js/dashboard.js"></script><script src="js/search.js"></script><script src="js/app.js"></script>
+</body></html>
