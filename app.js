@@ -7,6 +7,7 @@ let loaded = false;
 const searchInput = document.getElementById("searchInput");
 const clearSearch = document.getElementById("clearSearch");
 const refreshButton = document.getElementById("refreshButton");
+const releasedSearchInput = document.getElementById("releasedSearchInput");
 
 function endpoint(action) {
   const url = new URL(API_URL);
@@ -142,6 +143,35 @@ function renderReports() {
   renderOffices();
   renderProcessingTime();
   renderAging();
+  renderReleasedDocuments();
+}
+
+function releasedRecords() {
+  return allDocuments.filter(record => text(record.status) === "released");
+}
+
+function renderReleasedDocuments() {
+  const query = releasedSearchInput.value;
+  const rows = releasedRecords().filter(record => matches(record, query));
+  const body = document.getElementById("releasedTableBody");
+  body.replaceChildren();
+
+  rows.forEach(record => {
+    const row = document.createElement("tr");
+    [record.documentNumber, record.subject, record.requestingOffice, record.requester, formatDate(record.dateSigned), record.remarks].forEach(value => {
+      const cell = document.createElement("td");
+      cell.textContent = value || "-";
+      row.append(cell);
+    });
+    body.append(row);
+  });
+
+  document.getElementById("releasedTableWrap").hidden = rows.length === 0;
+  document.getElementById("releasedEmpty").hidden = rows.length > 0;
+}
+
+function releasedExportRecords() {
+  return releasedRecords().filter(record => matches(record, releasedSearchInput.value));
 }
 
 function renderMonthly() {
@@ -211,15 +241,14 @@ function renderAging() {
 }
 
 function exportPdf() {
-  if (!allDocuments.length) return showError("No document data is available to export.");
+  const records = releasedExportRecords();
+  if (!records.length) return showError("No released document data is available to export.");
   if (!window.jspdf?.jsPDF || !window.jspdf.jsPDF.API.autoTable) return showError("PDF export is unavailable. Check the network connection and try again.");
 
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
   const generated = new Date();
-  const ready = allDocuments.filter(record => text(record.status) === "ready for release").length;
-  const signature = allDocuments.filter(record => text(record.status) === "for signature").length;
-  const released = allDocuments.filter(record => text(record.status) === "released").length;
+  const released = records.length;
 
   pdf.setTextColor(11, 59, 145);
   pdf.setFontSize(16);
@@ -230,8 +259,8 @@ function exportPdf() {
   pdf.text("PaperPulse Lite", 40, 70);
   pdf.text(`Generated: ${generated.toLocaleDateString("en-PH")} ${generated.toLocaleTimeString("en-PH", { hour: "numeric", minute: "2-digit" })}`, 40, 88);
   pdf.setFontSize(11);
-  pdf.text(`Report Summary  |  Ready for Release: ${ready}  |  Documents for Signature: ${signature}  |  Released: ${released}`, 40, 112);
-  pdf.autoTable({ startY: 128, head: [["Document Number", "Subject", "Requesting Office", "Requester", "Date Received", "Date Signed", "Status", "Remarks"]], body: allDocuments.map(record => [record.documentNumber, record.subject, record.requestingOffice, record.requester, formatDate(record.dateReceived), formatDate(record.dateSigned), record.status, record.remarks]), styles: { fontSize: 7, cellPadding: 4 }, headStyles: { fillColor: [11, 59, 145] }, margin: { left: 40, right: 40 } });
+  pdf.text(`Released Documents | ${released} record${released === 1 ? "" : "s"}${releasedSearchInput.value.trim() ? " (filtered)" : ""}`, 40, 112);
+  pdf.autoTable({ startY: 128, head: [["Document Number", "Subject", "Requesting Office", "Requester", "Date Signed", "Remarks"]], body: records.map(record => [record.documentNumber, record.subject, record.requestingOffice, record.requester, formatDate(record.dateSigned), record.remarks]), styles: { fontSize: 7, cellPadding: 4 }, headStyles: { fillColor: [11, 59, 145] }, margin: { left: 40, right: 40 } });
   const pageCount = pdf.getNumberOfPages();
   for (let page = 1; page <= pageCount; page += 1) {
     pdf.setPage(page);
@@ -244,12 +273,13 @@ function exportPdf() {
 }
 
 function exportExcel() {
-  if (!allDocuments.length) return showError("No document data is available to export.");
+  const records = releasedExportRecords();
+  if (!records.length) return showError("No released document data is available to export.");
   if (!window.XLSX) return showError("Excel export is unavailable. Check the network connection and try again.");
-  const rows = allDocuments.map(record => ({ "Document Number": record.documentNumber, Subject: record.subject, "Requesting Office": record.requestingOffice, Requester: record.requester, "Date Received": formatDate(record.dateReceived), "Date Signed": formatDate(record.dateSigned), Status: record.status, Remarks: record.remarks }));
+  const rows = records.map(record => ({ "Document Number": record.documentNumber, Subject: record.subject, "Requesting Office": record.requestingOffice, Requester: record.requester, "Date Signed": formatDate(record.dateSigned), Remarks: record.remarks }));
   const sheet = XLSX.utils.json_to_sheet(rows);
-  const headers = ["Document Number", "Subject", "Requesting Office", "Requester", "Date Received", "Date Signed", "Status", "Remarks"];
-  sheet["!cols"] = [18, 34, 27, 24, 16, 16, 20, 34].map(width => ({ wch: width }));
+  const headers = ["Document Number", "Subject", "Requesting Office", "Requester", "Date Signed", "Remarks"];
+  sheet["!cols"] = [18, 34, 27, 24, 16, 34].map(width => ({ wch: width }));
   headers.forEach((header, index) => {
     const cell = sheet[XLSX.utils.encode_cell({ r: 0, c: index })];
     cell.s = { fill: { fgColor: { rgb: "0B3B91" } }, font: { color: { rgb: "FFFFFF" }, bold: true }, alignment: { horizontal: "center" } };
@@ -257,6 +287,25 @@ function exportExcel() {
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, sheet, "Document Report");
   XLSX.writeFile(workbook, "PaperPulse-Lite-Report.xlsx");
+}
+
+function escapeHtml(value) {
+  return String(value || "-").replace(/[&<>'"]/g, character => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", "\"": "&quot;" }[character]));
+}
+
+function printReleasedDocuments() {
+  const records = releasedExportRecords();
+  if (!records.length) return showError("No released document data is available to print.");
+
+  const reportWindow = window.open("", "_blank", "width=1000,height=700");
+  if (!reportWindow) return showError("Unable to open the print report. Please allow pop-ups and try again.");
+
+  const generated = new Date();
+  const rows = records.map(record => `<tr><td>${escapeHtml(record.documentNumber)}</td><td>${escapeHtml(record.subject)}</td><td>${escapeHtml(record.requestingOffice)}</td><td>${escapeHtml(record.requester)}</td><td>${escapeHtml(formatDate(record.dateSigned))}</td><td>${escapeHtml(record.remarks)}</td></tr>`).join("");
+  reportWindow.document.write(`<!doctype html><html lang="en"><head><meta charset="utf-8"><title>PaperPulse Lite - Released Documents</title><style>body{font:12px Arial,sans-serif;color:#202124;margin:32px}h1{margin:0;color:#0b3b91;font-size:19px}p{margin:5px 0}table{width:100%;border-collapse:collapse;margin-top:22px}th,td{padding:8px;border:1px solid #dadce0;text-align:left;vertical-align:top}th{background:#0b3b91;color:#fff;font-size:10px;text-transform:uppercase}footer{position:fixed;bottom:0;left:32px;right:32px;color:#5f6368;font-size:9px}</style></head><body><h1>GOOD SAMARITAN COLLEGES</h1><p>Office of the Vice President for Academic Affairs</p><p><strong>PaperPulse Lite - Released Documents</strong></p><p>Generated ${escapeHtml(generated.toLocaleString("en-PH"))} | ${records.length} record${records.length === 1 ? "" : "s"}${releasedSearchInput.value.trim() ? " (filtered)" : ""}</p><table><thead><tr><th>Document Number</th><th>Subject</th><th>Requesting Office</th><th>Requester</th><th>Date Signed</th><th>Remarks</th></tr></thead><tbody>${rows}</tbody></table><footer>Generated by PaperPulse Lite | Developed by Piolo Bernardino, LMS Associate &amp; Systems Support | Good Samaritan Colleges</footer></body></html>`);
+  reportWindow.document.close();
+  reportWindow.focus();
+  reportWindow.print();
 }
 
 function setPage(page) {
@@ -267,10 +316,11 @@ function setPage(page) {
 }
 
 searchInput.addEventListener("input", () => { clearSearch.hidden = !searchInput.value.trim(); clearTimeout(searchTimer); searchTimer = setTimeout(render, 100); });
+releasedSearchInput.addEventListener("input", renderReleasedDocuments);
 clearSearch.addEventListener("click", () => { searchInput.value = ""; clearSearch.hidden = true; render(); searchInput.focus(); });
 refreshButton.addEventListener("click", () => loadDocuments(true));
 document.getElementById("exportPdfButton").addEventListener("click", exportPdf);
 document.getElementById("exportExcelButton").addEventListener("click", exportExcel);
-document.getElementById("printButton").addEventListener("click", () => window.print());
+document.getElementById("printButton").addEventListener("click", printReleasedDocuments);
 document.querySelectorAll("[data-page]").forEach(link => link.addEventListener("click", event => { event.preventDefault(); setPage(link.dataset.page); }));
 document.addEventListener("DOMContentLoaded", () => { setPage(location.hash === "#reports" ? "reports" : location.hash === "#about" ? "about" : "home"); loadDocuments(); });
