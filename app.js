@@ -2,6 +2,7 @@ const API_URL = "https://script.google.com/macros/s/AKfycby85uIXLP0C4nUM_8urWehc
 
 let allDocuments = [];
 let archiveDocuments = [];
+let selectedArchiveDocument = null;
 let searchTimer;
 let loaded = false;
 
@@ -28,6 +29,22 @@ const archiveTableBody = document.getElementById("archiveTableBody");
 const archiveTableWrap = document.getElementById("archiveTableWrap");
 const archiveEmpty = document.getElementById("archiveEmpty");
 const archiveError = document.getElementById("archiveError");
+const archiveUploadButton = document.getElementById("archiveUploadButton");
+const archiveUploadSuccess = document.getElementById("archiveUploadSuccess");
+const archiveUploadDialog = document.getElementById("archiveUploadDialog");
+const archiveUploadForm = document.getElementById("archiveUploadForm");
+const archiveDocumentSearch = document.getElementById("archiveDocumentSearch");
+const archiveDocumentResults = document.getElementById("archiveDocumentResults");
+const archiveDocumentEmpty = document.getElementById("archiveDocumentEmpty");
+const archiveSelectedDocument = document.getElementById("archiveSelectedDocument");
+const archiveSelectedNumber = document.getElementById("archiveSelectedNumber");
+const archiveSelectedSubject = document.getElementById("archiveSelectedSubject");
+const archiveSelectedOffice = document.getElementById("archiveSelectedOffice");
+const archiveSelectedRequester = document.getElementById("archiveSelectedRequester");
+const archiveFile = document.getElementById("archiveFile");
+const archiveRemarks = document.getElementById("archiveRemarks");
+const archiveUploadError = document.getElementById("archiveUploadError");
+const archiveUploadSubmit = document.getElementById("archiveUploadSubmit");
 
 function endpoint(action) {
   const url = new URL(API_URL);
@@ -265,6 +282,113 @@ function openArchiveDocument(event) {
   const button = event.target.closest("[data-archive-action]");
   if (!button?.dataset.archiveUrl) return;
   window.open(button.dataset.archiveUrl, "_blank", "noopener");
+}
+
+function openArchiveUploadDialog() {
+  if (!archiveUploadDialog || !archiveUploadForm) return;
+  archiveUploadForm.reset();
+  selectedArchiveDocument = null;
+  archiveDocumentResults.hidden = true;
+  archiveDocumentEmpty.hidden = true;
+  archiveSelectedDocument.hidden = true;
+  archiveUploadError.hidden = true;
+  archiveUploadSuccess.hidden = true;
+  archiveUploadSubmit.disabled = true;
+  openDialog(archiveUploadDialog);
+}
+
+function renderArchiveDocumentCandidates() {
+  if (!archiveDocumentSearch || !archiveDocumentResults || !archiveDocumentEmpty) return;
+  const query = archiveDocumentSearch.value.trim();
+  const records = allDocuments.filter(record => text(record.status) === "released" && matches(record, query));
+  const body = archiveDocumentResults.querySelector("tbody");
+  if (!body) return;
+  body.replaceChildren();
+  records.forEach(record => {
+    const row = document.createElement("tr");
+    [record.documentNumber, record.subject, record.requestingOffice, record.requester].forEach(value => {
+      const cell = document.createElement("td");
+      cell.textContent = value || "-";
+      row.append(cell);
+    });
+    const action = document.createElement("td");
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "material-button";
+    button.textContent = "Select";
+    button.dataset.documentNumber = record.documentNumber;
+    action.append(button);
+    row.append(action);
+    body.append(row);
+  });
+  archiveDocumentResults.hidden = records.length === 0;
+  archiveDocumentEmpty.hidden = records.length > 0;
+}
+
+function selectArchiveDocument(event) {
+  const button = event.target.closest("[data-document-number]");
+  if (!button) return;
+  selectedArchiveDocument = allDocuments.find(record => record.documentNumber === button.dataset.documentNumber && text(record.status) === "released") || null;
+  if (!selectedArchiveDocument) return;
+  archiveSelectedNumber.textContent = selectedArchiveDocument.documentNumber;
+  archiveSelectedSubject.textContent = selectedArchiveDocument.subject || "-";
+  archiveSelectedOffice.textContent = selectedArchiveDocument.requestingOffice || "-";
+  archiveSelectedRequester.textContent = selectedArchiveDocument.requester || "-";
+  archiveSelectedDocument.hidden = false;
+  updateArchiveUploadButton();
+}
+
+function updateArchiveUploadButton() {
+  if (!archiveUploadSubmit) return;
+  archiveUploadSubmit.disabled = !selectedArchiveDocument || !archiveFile?.files?.[0];
+}
+
+async function uploadArchive(event) {
+  event.preventDefault();
+  if (!selectedArchiveDocument || !archiveFile || !archiveUploadError || !archiveUploadSubmit) return;
+  const file = archiveFile.files[0];
+  archiveUploadError.hidden = true;
+  if (!file || file.type !== "application/pdf") {
+    archiveUploadError.textContent = "Choose a PDF file to upload.";
+    archiveUploadError.hidden = false;
+    return;
+  }
+
+  const form = new FormData();
+  form.set("action", "archive_upload");
+  form.set("documentNumber", selectedArchiveDocument.documentNumber);
+  form.set("subject", selectedArchiveDocument.subject);
+  form.set("requestingOffice", selectedArchiveDocument.requestingOffice);
+  form.set("requester", selectedArchiveDocument.requester);
+  form.set("archiveRemarks", archiveRemarks.value.trim());
+  form.set("file", file, file.name);
+
+  archiveUploadSubmit.disabled = true;
+  archiveUploadSubmit.textContent = "Uploading...";
+  try {
+    const response = await fetch(API_URL, { method: "POST", body: form });
+    let payload;
+    try {
+      payload = await response.json();
+    } catch {
+      throw new Error("The archive service returned an invalid response.");
+    }
+    if (!response.ok || payload?.success === false) {
+      throw new Error(payload?.error || payload?.message || `The archive service returned ${response.status}.`);
+    }
+    closeDialog(archiveUploadDialog);
+    selectedArchiveDocument = null;
+    await loadArchive();
+    await loadDocuments();
+    archiveUploadSuccess.textContent = `Archive ${payload.archiveId} uploaded successfully.`;
+    archiveUploadSuccess.hidden = false;
+  } catch (error) {
+    archiveUploadError.textContent = error.message;
+    archiveUploadError.hidden = false;
+  } finally {
+    archiveUploadSubmit.textContent = "Upload";
+    updateArchiveUploadButton();
+  }
 }
 
 function normalize(record) {
@@ -542,5 +666,10 @@ if (archiveLoginForm) archiveLoginForm.addEventListener("submit", archiveLogin);
 if (archiveRefreshButton) archiveRefreshButton.addEventListener("click", () => loadArchive(true));
 if (archiveSearchInput) archiveSearchInput.addEventListener("input", renderArchive);
 if (archiveTableBody) archiveTableBody.addEventListener("click", openArchiveDocument);
+if (archiveUploadButton) archiveUploadButton.addEventListener("click", openArchiveUploadDialog);
+if (archiveDocumentSearch) archiveDocumentSearch.addEventListener("input", renderArchiveDocumentCandidates);
+if (archiveDocumentResults) archiveDocumentResults.addEventListener("click", selectArchiveDocument);
+if (archiveFile) archiveFile.addEventListener("change", updateArchiveUploadButton);
+if (archiveUploadForm) archiveUploadForm.addEventListener("submit", uploadArchive);
 document.querySelectorAll("[data-close-dialog]").forEach(button => button.addEventListener("click", () => closeDialog(document.getElementById(button.dataset.closeDialog))));
 document.addEventListener("DOMContentLoaded", () => { setPage(location.hash === "#reports" ? "reports" : location.hash === "#about" ? "about" : "home"); loadDocuments(); });
