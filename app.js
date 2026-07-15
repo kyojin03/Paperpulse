@@ -131,10 +131,12 @@ async function createDocument(event) {
 
   try {
     const response = await fetch(API_URL, {
-      method: "POST",
-      headers: { Accept: "application/json", "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
-      body: form
-    });
+  method: "POST",
+  headers: {
+    "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
+  },
+  body: form
+});
     let payload;
     try {
       payload = await response.json();
@@ -358,14 +360,30 @@ async function uploadArchive(event) {
     return;
   }
 
-  const form = new FormData();
-  form.set("action", "archive_upload");
-  form.set("documentNumber", selectedArchiveDocument.documentNumber);
-  form.set("subject", selectedArchiveDocument.subject);
-  form.set("requestingOffice", selectedArchiveDocument.requestingOffice);
-  form.set("requester", selectedArchiveDocument.requester);
-  form.set("archiveRemarks", archiveRemarks.value.trim());
-  form.set("file", file, file.name);
+ const fileBase64 = await new Promise((resolve, reject) => {
+  const reader = new FileReader();
+
+  reader.onload = () => {
+    resolve(reader.result.split(",")[1]);
+  };
+
+  reader.onerror = reject;
+
+  reader.readAsDataURL(file);
+});
+
+const form = new URLSearchParams();
+
+form.set("action", "archive_upload");
+form.set("documentNumber", selectedArchiveDocument.documentNumber);
+form.set("subject", selectedArchiveDocument.subject);
+form.set("requestingOffice", selectedArchiveDocument.requestingOffice);
+form.set("requester", selectedArchiveDocument.requester);
+form.set("archiveRemarks", archiveRemarks.value.trim());
+
+form.set("fileName", file.name);
+form.set("fileMimeType", file.type);
+form.set("fileData", fileBase64);
 
   archiveUploadSubmit.disabled = true;
   archiveUploadSubmit.textContent = "Uploading...";
