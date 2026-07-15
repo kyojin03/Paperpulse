@@ -1,6 +1,7 @@
 const API_URL = "https://script.google.com/macros/s/AKfycby85uIXLP0C4nUM_8urWehcF7Lmf-r6cQ8E4bWEF3n8UWCoOlWFohAJI7I-l26LWTY0/exec";
 
 let allDocuments = [];
+let archiveDocuments = [];
 let searchTimer;
 let loaded = false;
 
@@ -16,6 +17,17 @@ const newDocumentSave = document.getElementById("newDocumentSave");
 const registrationSuccessDialog = document.getElementById("registrationSuccessDialog");
 const registeredDocumentNumber = document.getElementById("registeredDocumentNumber");
 const registeredDocumentStatus = document.getElementById("registeredDocumentStatus");
+const archiveLoginForm = document.getElementById("archiveLoginForm");
+const archivePassword = document.getElementById("archivePassword");
+const archiveLoginButton = document.getElementById("archiveLoginButton");
+const archiveLoginError = document.getElementById("archiveLoginError");
+const archiveContent = document.getElementById("archiveContent");
+const archiveRefreshButton = document.getElementById("archiveRefreshButton");
+const archiveSearchInput = document.getElementById("archiveSearchInput");
+const archiveTableBody = document.getElementById("archiveTableBody");
+const archiveTableWrap = document.getElementById("archiveTableWrap");
+const archiveEmpty = document.getElementById("archiveEmpty");
+const archiveError = document.getElementById("archiveError");
 
 function endpoint(action) {
   const url = new URL(API_URL);
@@ -66,6 +78,13 @@ async function loadDocuments(manual = false) {
     }
     if (manual) setRefreshState("Refresh", false);
   }
+}
+
+function archiveEndpoint(action, parameters = {}) {
+  const url = new URL(API_URL);
+  url.searchParams.set("action", action);
+  Object.entries(parameters).forEach(([key, value]) => url.searchParams.set(key, value));
+  return url.toString();
 }
 
 function closeDialog(dialog) {
@@ -125,6 +144,127 @@ async function createDocument(event) {
     newDocumentSave.disabled = false;
     newDocumentSave.textContent = "Save";
   }
+}
+
+function archiveMessage(element, message) {
+  const textElement = element?.querySelector("p");
+  if (textElement) textElement.textContent = message;
+  if (element) element.hidden = false;
+}
+
+function normalizeArchive(record) {
+  return {
+    archiveId: String(record.archiveId || record.id || record["Archive ID"] || "").trim(),
+    documentNumber: String(record.documentNumber || record.trackingNumber || record["Document Number"] || record["Tracking Number"] || "").trim(),
+    subject: String(record.subject || record.Subject || "").trim(),
+    requestingOffice: String(record.requestingOffice || record.office || record["Requesting Office"] || "").trim(),
+    requester: String(record.requester || record.Requester || "").trim(),
+    archiveDate: record.archiveDate || record["Archive Date"] || record.uploadTimestamp || record["Upload Timestamp"] || "",
+    driveUrl: String(record.driveUrl || record.fileUrl || record.url || record["Drive URL"] || "").trim()
+  };
+}
+
+function archiveMatches(record, query) {
+  const needle = text(query);
+  return !needle || [record.archiveId, record.documentNumber, record.subject, record.requestingOffice, record.requester].some(value => text(value).includes(needle));
+}
+
+async function archiveLogin(event) {
+  event.preventDefault();
+  if (!archivePassword || !archiveLoginButton || !archiveLoginError || !archiveContent) return;
+
+  const password = archivePassword.value;
+  archiveLoginError.hidden = true;
+  if (!password) return;
+  archiveLoginButton.disabled = true;
+  archiveLoginButton.textContent = "Unlocking...";
+
+  try {
+    const response = await fetch(archiveEndpoint("archive_login", { password }), { headers: { Accept: "application/json" } });
+    const payload = await response.json();
+    if (!response.ok || !payload?.success) {
+      throw new Error(payload?.error || payload?.message || "Incorrect password.");
+    }
+    archivePassword.value = "";
+    archiveLoginForm.hidden = true;
+    archiveContent.hidden = false;
+    await loadArchive();
+  } catch (error) {
+    archivePassword.value = "";
+    archiveLoginError.textContent = error.message;
+    archiveLoginError.hidden = false;
+  } finally {
+    archiveLoginButton.disabled = false;
+    archiveLoginButton.textContent = "Unlock";
+  }
+}
+
+async function loadArchive(manual = false) {
+  if (!archiveTableBody || !archiveTableWrap || !archiveEmpty) return;
+  if (manual && archiveRefreshButton) {
+    archiveRefreshButton.disabled = true;
+    archiveRefreshButton.querySelector("span").textContent = "Refreshing...";
+  }
+  if (archiveError) archiveError.hidden = true;
+
+  try {
+    const response = await fetch(archiveEndpoint("archive_list"), { headers: { Accept: "application/json" } });
+    const payload = await response.json();
+    if (!response.ok || payload?.success === false) {
+      throw new Error(payload?.error || payload?.message || "The archive service could not complete the request.");
+    }
+    const records = Array.isArray(payload) ? payload : payload.documents || payload.data || payload.records || payload.results;
+    if (!Array.isArray(records) || !records.every(record => record && typeof record === "object")) {
+      throw new Error("The archive service returned an invalid response.");
+    }
+    archiveDocuments = records.map(normalizeArchive).sort((left, right) => (parsedDate(right.archiveDate)?.getTime() || 0) - (parsedDate(left.archiveDate)?.getTime() || 0));
+    renderArchive();
+  } catch (error) {
+    archiveMessage(archiveError, error.message);
+  } finally {
+    if (manual && archiveRefreshButton) {
+      archiveRefreshButton.querySelector("span").textContent = "Updated";
+      setTimeout(() => {
+        archiveRefreshButton.disabled = false;
+        archiveRefreshButton.querySelector("span").textContent = "Refresh";
+      }, 1200);
+    }
+  }
+}
+
+function renderArchive() {
+  if (!archiveSearchInput || !archiveTableBody || !archiveTableWrap || !archiveEmpty) return;
+  const records = archiveDocuments.filter(record => archiveMatches(record, archiveSearchInput.value));
+  archiveTableBody.replaceChildren();
+  records.forEach(record => {
+    const row = document.createElement("tr");
+    [record.archiveId, record.documentNumber, record.subject, record.requestingOffice, record.requester, formatDate(record.archiveDate)].forEach(value => {
+      const cell = document.createElement("td");
+      cell.textContent = value || "-";
+      row.append(cell);
+    });
+    const actions = document.createElement("td");
+    ["View PDF", "Download PDF", "Print PDF"].forEach(action => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "material-button";
+      button.textContent = action;
+      button.dataset.archiveAction = action;
+      button.dataset.archiveUrl = record.driveUrl;
+      button.disabled = !record.driveUrl;
+      actions.append(button);
+    });
+    row.append(actions);
+    archiveTableBody.append(row);
+  });
+  archiveTableWrap.hidden = records.length === 0;
+  archiveEmpty.hidden = records.length > 0;
+}
+
+function openArchiveDocument(event) {
+  const button = event.target.closest("[data-archive-action]");
+  if (!button?.dataset.archiveUrl) return;
+  window.open(button.dataset.archiveUrl, "_blank", "noopener");
 }
 
 function normalize(record) {
@@ -398,5 +538,9 @@ if (newDocumentButton && newDocumentForm) {
   });
   newDocumentForm.addEventListener("submit", createDocument);
 }
+if (archiveLoginForm) archiveLoginForm.addEventListener("submit", archiveLogin);
+if (archiveRefreshButton) archiveRefreshButton.addEventListener("click", () => loadArchive(true));
+if (archiveSearchInput) archiveSearchInput.addEventListener("input", renderArchive);
+if (archiveTableBody) archiveTableBody.addEventListener("click", openArchiveDocument);
 document.querySelectorAll("[data-close-dialog]").forEach(button => button.addEventListener("click", () => closeDialog(document.getElementById(button.dataset.closeDialog))));
 document.addEventListener("DOMContentLoaded", () => { setPage(location.hash === "#reports" ? "reports" : location.hash === "#about" ? "about" : "home"); loadDocuments(); });
