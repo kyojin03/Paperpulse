@@ -41,6 +41,7 @@ const archiveSelectedNumber = document.getElementById("archiveSelectedNumber");
 const archiveSelectedSubject = document.getElementById("archiveSelectedSubject");
 const archiveSelectedOffice = document.getElementById("archiveSelectedOffice");
 const archiveSelectedRequester = document.getElementById("archiveSelectedRequester");
+const archiveSelectedStatus = document.getElementById("archiveSelectedStatus");
 const archiveFile = document.getElementById("archiveFile");
 const archiveRemarks = document.getElementById("archiveRemarks");
 const archiveUploadError = document.getElementById("archiveUploadError");
@@ -284,7 +285,7 @@ function openArchiveDocument(event) {
   window.open(button.dataset.archiveUrl, "_blank", "noopener");
 }
 
-function openArchiveUploadDialog() {
+async function openArchiveUploadDialog() {
   if (!archiveUploadDialog || !archiveUploadForm) return;
   archiveUploadForm.reset();
   selectedArchiveDocument = null;
@@ -295,6 +296,8 @@ function openArchiveUploadDialog() {
   archiveUploadSuccess.hidden = true;
   archiveUploadSubmit.disabled = true;
   openDialog(archiveUploadDialog);
+  await loadDocuments();
+  renderArchiveDocumentCandidates();
 }
 
 function renderArchiveDocumentCandidates() {
@@ -334,6 +337,7 @@ function selectArchiveDocument(event) {
   archiveSelectedSubject.textContent = selectedArchiveDocument.subject || "-";
   archiveSelectedOffice.textContent = selectedArchiveDocument.requestingOffice || "-";
   archiveSelectedRequester.textContent = selectedArchiveDocument.requester || "-";
+  archiveSelectedStatus.textContent = selectedArchiveDocument.status || "-";
   archiveSelectedDocument.hidden = false;
   updateArchiveUploadButton();
 }
@@ -348,7 +352,7 @@ async function uploadArchive(event) {
   if (!selectedArchiveDocument || !archiveFile || !archiveUploadError || !archiveUploadSubmit) return;
   const file = archiveFile.files[0];
   archiveUploadError.hidden = true;
-  if (!file || file.type !== "application/pdf") {
+  if (!file || (file.type && file.type !== "application/pdf") || !/\.pdf$/i.test(file.name)) {
     archiveUploadError.textContent = "Choose a PDF file to upload.";
     archiveUploadError.hidden = false;
     return;
