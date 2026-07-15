@@ -8,6 +8,14 @@ const searchInput = document.getElementById("searchInput");
 const clearSearch = document.getElementById("clearSearch");
 const refreshButton = document.getElementById("refreshButton");
 const releasedSearchInput = document.getElementById("releasedSearchInput");
+const newDocumentButton = document.getElementById("newDocumentButton");
+const newDocumentDialog = document.getElementById("newDocumentDialog");
+const newDocumentForm = document.getElementById("newDocumentForm");
+const newDocumentError = document.getElementById("newDocumentError");
+const newDocumentSave = document.getElementById("newDocumentSave");
+const registrationSuccessDialog = document.getElementById("registrationSuccessDialog");
+const registeredDocumentNumber = document.getElementById("registeredDocumentNumber");
+const registeredDocumentStatus = document.getElementById("registeredDocumentStatus");
 
 function endpoint(action) {
   const url = new URL(API_URL);
@@ -57,6 +65,65 @@ async function loadDocuments(manual = false) {
       showEmpty("signature", "No documents available.");
     }
     if (manual) setRefreshState("Refresh", false);
+  }
+}
+
+function closeDialog(dialog) {
+  if (dialog && typeof dialog.close === "function") dialog.close();
+}
+
+function openDialog(dialog) {
+  if (dialog && typeof dialog.showModal === "function") dialog.showModal();
+}
+
+async function createDocument(event) {
+  event.preventDefault();
+  if (!newDocumentForm || !newDocumentSave || !newDocumentError) return;
+
+  newDocumentError.hidden = true;
+  const form = new URLSearchParams({
+    action: "create_document",
+    subject: newDocumentForm.elements.subject.value.trim(),
+    requestingOffice: newDocumentForm.elements.requestingOffice.value.trim(),
+    requester: newDocumentForm.elements.requester.value.trim(),
+    remarks: newDocumentForm.elements.remarks.value.trim()
+  });
+
+  newDocumentSave.disabled = true;
+  newDocumentSave.textContent = "Saving...";
+
+  try {
+    const response = await fetch(API_URL, {
+      method: "POST",
+      headers: { Accept: "application/json", "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
+      body: form
+    });
+    let payload;
+    try {
+      payload = await response.json();
+    } catch {
+      throw new Error("The document service returned an invalid response.");
+    }
+    if (!response.ok || payload?.success === false) {
+      throw new Error(payload?.error || payload?.message || `The document service returned ${response.status}.`);
+    }
+
+    const record = payload.document || payload.data || payload.record || payload;
+    const documentNumber = record.documentNumber || record.trackingNumber || record["Document Number"] || record["Tracking Number"];
+    if (!documentNumber) throw new Error(payload?.error || payload?.message || "The document service returned an invalid response.");
+
+    await loadDocuments();
+    closeDialog(newDocumentDialog);
+    newDocumentForm.reset();
+    registeredDocumentNumber.textContent = documentNumber;
+    registeredDocumentStatus.textContent = record.status || record.Status || "For Signature";
+    openDialog(registrationSuccessDialog);
+  } catch (error) {
+    newDocumentError.textContent = error.message;
+    newDocumentError.hidden = false;
+  } finally {
+    newDocumentSave.disabled = false;
+    newDocumentSave.textContent = "Save";
   }
 }
 
@@ -323,4 +390,13 @@ document.getElementById("exportPdfButton").addEventListener("click", exportPdf);
 document.getElementById("exportExcelButton").addEventListener("click", exportExcel);
 document.getElementById("printButton").addEventListener("click", printReleasedDocuments);
 document.querySelectorAll("[data-page]").forEach(link => link.addEventListener("click", event => { event.preventDefault(); setPage(link.dataset.page); }));
+if (newDocumentButton && newDocumentForm) {
+  newDocumentButton.addEventListener("click", () => {
+    newDocumentForm.reset();
+    newDocumentError.hidden = true;
+    openDialog(newDocumentDialog);
+  });
+  newDocumentForm.addEventListener("submit", createDocument);
+}
+document.querySelectorAll("[data-close-dialog]").forEach(button => button.addEventListener("click", () => closeDialog(document.getElementById(button.dataset.closeDialog))));
 document.addEventListener("DOMContentLoaded", () => { setPage(location.hash === "#reports" ? "reports" : location.hash === "#about" ? "about" : "home"); loadDocuments(); });
