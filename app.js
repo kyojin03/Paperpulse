@@ -5,6 +5,7 @@ let archiveDocuments = [];
 let selectedArchiveDocument = null;
 let searchTimer;
 let loaded = false;
+let archiveLoaded = false;
 
 const searchInput = document.getElementById("searchInput");
 const clearSearch = document.getElementById("clearSearch");
@@ -238,7 +239,9 @@ async function loadArchive(manual = false) {
       throw new Error("The archive service returned an invalid response.");
     }
     archiveDocuments = records.map(normalizeArchive).sort((left, right) => (parsedDate(right.archiveDate)?.getTime() || 0) - (parsedDate(left.archiveDate)?.getTime() || 0));
+    archiveLoaded = true;
     renderArchive();
+    renderReports();
   } catch (error) {
     archiveMessage(archiveError, error.message);
   } finally {
@@ -492,11 +495,28 @@ function renderReports() {
   document.getElementById("reportReady").textContent = counts.ready;
   document.getElementById("reportSignature").textContent = counts.signature;
   document.getElementById("reportReleased").textContent = counts.released;
+  renderArchiveDashboard(counts.released);
   renderMonthly();
   renderOffices();
   renderProcessingTime();
   renderAging();
   renderReleasedDocuments();
+}
+
+function renderArchiveDashboard(releasedCount) {
+  const archived = document.getElementById("archiveCount");
+  const pending = document.getElementById("pendingArchiveCount");
+  if (!archived || !pending) return;
+
+  if (!archiveLoaded) {
+    archived.textContent = "—";
+    pending.textContent = "—";
+    return;
+  }
+
+  const archivedDocumentNumbers = new Set(archiveDocuments.map(record => record.documentNumber).filter(Boolean));
+  archived.textContent = archiveDocuments.length;
+  pending.textContent = Math.max(0, releasedCount - archivedDocumentNumbers.size);
 }
 
 function releasedRecords() {
@@ -668,30 +688,81 @@ function setPage(page) {
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
-searchInput.addEventListener("input", () => { clearSearch.hidden = !searchInput.value.trim(); clearTimeout(searchTimer); searchTimer = setTimeout(render, 100); });
-releasedSearchInput.addEventListener("input", renderReleasedDocuments);
-clearSearch.addEventListener("click", () => { searchInput.value = ""; clearSearch.hidden = true; render(); searchInput.focus(); });
-refreshButton.addEventListener("click", () => loadDocuments(true));
-document.getElementById("exportPdfButton").addEventListener("click", exportPdf);
-document.getElementById("exportExcelButton").addEventListener("click", exportExcel);
-document.getElementById("printButton").addEventListener("click", printReleasedDocuments);
-document.querySelectorAll("[data-page]").forEach(link => link.addEventListener("click", event => { event.preventDefault(); setPage(link.dataset.page); }));
-if (newDocumentButton && newDocumentForm) {
-  newDocumentButton.addEventListener("click", () => {
-    newDocumentForm.reset();
-    newDocumentError.hidden = true;
-    openDialog(newDocumentDialog);
-  });
-  newDocumentForm.addEventListener("submit", createDocument);
+function setSidebarActive(target) {
+  document.querySelectorAll("[data-nav-target]").forEach(button => button.classList.toggle("is-active", button.dataset.navTarget === target));
 }
-if (archiveLoginForm) archiveLoginForm.addEventListener("submit", archiveLogin);
-if (archiveRefreshButton) archiveRefreshButton.addEventListener("click", () => loadArchive(true));
-if (archiveSearchInput) archiveSearchInput.addEventListener("input", renderArchive);
-if (archiveTableBody) archiveTableBody.addEventListener("click", openArchiveDocument);
-if (archiveUploadButton) archiveUploadButton.addEventListener("click", openArchiveUploadDialog);
-if (archiveDocumentSearch) archiveDocumentSearch.addEventListener("input", renderArchiveDocumentCandidates);
-if (archiveDocumentResults) archiveDocumentResults.addEventListener("click", selectArchiveDocument);
-if (archiveFile) archiveFile.addEventListener("change", updateArchiveUploadButton);
-if (archiveUploadForm) archiveUploadForm.addEventListener("submit", uploadArchive);
-document.querySelectorAll("[data-close-dialog]").forEach(button => button.addEventListener("click", () => closeDialog(document.getElementById(button.dataset.closeDialog))));
-document.addEventListener("DOMContentLoaded", () => { setPage(location.hash === "#reports" ? "reports" : location.hash === "#about" ? "about" : "home"); loadDocuments(); });
+
+function navigateFromSidebar(target) {
+  const destinations = {
+    dashboard: { page: "home", element: "dashboard" },
+    documents: { page: "home", element: "documents" },
+    archive: { page: "reports", element: "archiveVault" },
+    reports: { page: "reports", element: "reports" },
+    about: { page: "about", element: "about" }
+  };
+  const destination = destinations[target];
+  if (!destination) return;
+  setPage(destination.page);
+  setSidebarActive(target);
+  requestAnimationFrame(() => document.getElementById(destination.element)?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  document.getElementById("sidebar")?.classList.remove("sidebar-open");
+}
+
+function initializeEnterpriseControls() {
+  const currentDate = document.getElementById("currentDate");
+  if (currentDate) {
+    currentDate.innerHTML = '<i class="fa-regular fa-calendar" aria-hidden="true"></i>';
+    currentDate.append(document.createTextNode(new Intl.DateTimeFormat("en-PH", { weekday: "short", month: "short", day: "numeric", year: "numeric" }).format(new Date())));
+  }
+
+  const sidebar = document.getElementById("sidebar");
+  const sidebarToggle = document.getElementById("sidebarToggle");
+  if (sidebar && sidebarToggle) {
+    sidebarToggle.addEventListener("click", () => {
+      if (window.matchMedia("(max-width: 720px)").matches) {
+        const isOpen = sidebar.classList.toggle("sidebar-open");
+        sidebarToggle.setAttribute("aria-expanded", String(isOpen));
+      } else {
+        const isCollapsed = document.body.classList.toggle("sidebar-collapsed");
+        sidebarToggle.setAttribute("aria-expanded", String(!isCollapsed));
+      }
+    });
+  }
+  document.querySelectorAll("[data-nav-target]").forEach(button => button.addEventListener("click", () => navigateFromSidebar(button.dataset.navTarget)));
+}
+
+function initializeApp() {
+  if (searchInput) searchInput.addEventListener("input", () => { clearSearch.hidden = !searchInput.value.trim(); clearTimeout(searchTimer); searchTimer = setTimeout(render, 100); });
+  if (releasedSearchInput) releasedSearchInput.addEventListener("input", renderReleasedDocuments);
+  if (clearSearch) clearSearch.addEventListener("click", () => { searchInput.value = ""; clearSearch.hidden = true; render(); searchInput.focus(); });
+  if (refreshButton) refreshButton.addEventListener("click", () => loadDocuments(true));
+  document.getElementById("exportPdfButton")?.addEventListener("click", exportPdf);
+  document.getElementById("exportExcelButton")?.addEventListener("click", exportExcel);
+  document.getElementById("printButton")?.addEventListener("click", printReleasedDocuments);
+  document.querySelectorAll("[data-page]").forEach(link => link.addEventListener("click", event => { event.preventDefault(); setPage(link.dataset.page); }));
+  if (newDocumentButton && newDocumentForm) {
+    newDocumentButton.addEventListener("click", () => {
+      newDocumentForm.reset();
+      newDocumentError.hidden = true;
+      openDialog(newDocumentDialog);
+    });
+    newDocumentForm.addEventListener("submit", createDocument);
+  }
+  if (archiveLoginForm) archiveLoginForm.addEventListener("submit", archiveLogin);
+  if (archiveRefreshButton) archiveRefreshButton.addEventListener("click", () => loadArchive(true));
+  if (archiveSearchInput) archiveSearchInput.addEventListener("input", renderArchive);
+  if (archiveTableBody) archiveTableBody.addEventListener("click", openArchiveDocument);
+  if (archiveUploadButton) archiveUploadButton.addEventListener("click", openArchiveUploadDialog);
+  if (archiveDocumentSearch) archiveDocumentSearch.addEventListener("input", renderArchiveDocumentCandidates);
+  if (archiveDocumentResults) archiveDocumentResults.addEventListener("click", selectArchiveDocument);
+  if (archiveFile) archiveFile.addEventListener("change", updateArchiveUploadButton);
+  if (archiveUploadForm) archiveUploadForm.addEventListener("submit", uploadArchive);
+  document.querySelectorAll("[data-close-dialog]").forEach(button => button.addEventListener("click", () => closeDialog(document.getElementById(button.dataset.closeDialog))));
+  initializeEnterpriseControls();
+  const page = location.hash === "#reports" ? "reports" : location.hash === "#about" ? "about" : "home";
+  setPage(page);
+  setSidebarActive(page === "reports" ? "reports" : page === "about" ? "about" : "dashboard");
+  loadDocuments();
+}
+
+document.addEventListener("DOMContentLoaded", initializeApp, { once: true });
