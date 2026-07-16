@@ -47,9 +47,9 @@
             <div class="dashboard-hero__content">
               <div class="dashboard-hero__identity">
                 <img class="dashboard-hero__logo" src="assets/images/goodsam-logo.png" alt="Good Samaritan Colleges logo">
-                <div><p class="dashboard-hero__institution">Good Samaritan Colleges</p><h1 id="home-title">PaperPulse</h1><p class="dashboard-hero__office">Office of the Vice President for Academic Affairs</p><p class="dashboard-hero__description">Document Tracking &amp; Digital Archive Management System</p></div>
+                <div><p class="dashboard-hero__institution">Good Samaritan Colleges</p><h1 id="home-title">PaperPulse</h1><p class="dashboard-hero__office">Office of the Vice President for Academic Affairs</p><p class="dashboard-hero__description">Document Tracking &amp; Digital Archive Management System</p><p class="dashboard-hero__values">Excellence <span>&bull;</span> Integrity <span>&bull;</span> Service</p></div>
               </div>
-              <div class="dashboard-hero__welcome"><p>Welcome Back,</p><span id="currentDate" class="hero-date"><i class="fa-regular fa-calendar" aria-hidden="true"></i></span><span class="user-chip user-chip--hero"><i class="fa-regular fa-user" aria-hidden="true"></i><span>OVPAA User</span></span></div>
+              <div class="dashboard-hero__welcome"><p>Welcome back, OVPAA User!</p><span>Building a more efficient, organized,<br>and paperless workflow.</span><span id="currentDate" class="hero-date"><i class="fa-regular fa-calendar" aria-hidden="true"></i></span><span class="user-chip user-chip--hero"><i class="fa-regular fa-user" aria-hidden="true"></i><span>OVPAA User</span></span></div>
             </div>
           </section>
 
@@ -61,17 +61,22 @@
             <article class="stat-card"><span class="stat-card__icon stat-card__icon--neutral"><i class="fa-regular fa-clock" aria-hidden="true"></i></span><div><span>Pending Archive</span><strong id="pendingArchiveCount">—</strong></div></article>
           </section>
 
-          <section class="toolbar" aria-label="Document tools">
-            <div class="toolbar__title"><h2>Active Documents</h2><p>Find and manage documents currently in the OVPAA workflow.</p></div>
-            <label class="sr-only" for="searchInput">Search documents</label>
-            <div class="search-wrap"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><input id="searchInput" type="search" autocomplete="off" placeholder="Search Document Number, Subject, Office or Requester"><button id="clearSearch" type="button" aria-label="Clear search" hidden><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></div>
-            <div class="toolbar-bottom"><div class="toolbar-actions"><button id="newDocumentButton" class="material-button material-button--primary" type="button"><i class="fa-solid fa-plus" aria-hidden="true"></i> New Document</button><button id="refreshButton" class="material-button" type="button"><i class="fa-solid fa-rotate" aria-hidden="true"></i> <span>Refresh</span></button></div><p id="lastUpdated" class="last-updated" aria-live="polite"></p></div>
-          </section>
-
-          <section id="documents" class="records" aria-label="Active document lists">
+          <div id="documents" class="dashboard-workspace">
+            <div class="dashboard-workspace__left">
+              <section class="toolbar" aria-label="Document tools">
+                <div class="toolbar__title"><h2>Active Documents</h2><p>Find and manage documents currently in the OVPAA workflow.</p></div>
+                <label class="sr-only" for="searchInput">Search documents</label>
+                <div class="search-wrap"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><input id="searchInput" type="search" autocomplete="off" placeholder="Search Document Number, Subject, Office or Requester"><button id="clearSearch" type="button" aria-label="Clear search" hidden><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></div>
+                <div class="toolbar-bottom"><div class="toolbar-actions"><button id="newDocumentButton" class="material-button material-button--primary" type="button"><i class="fa-solid fa-plus" aria-hidden="true"></i> New Document</button><button id="refreshButton" class="material-button" type="button"><i class="fa-solid fa-rotate" aria-hidden="true"></i> <span>Refresh</span></button></div><p id="lastUpdated" class="last-updated" aria-live="polite"></p></div>
+              </section>
+              <section class="records" aria-label="Ready for release documents">
             <article class="table-card" aria-labelledby="release-heading"><div class="table-heading"><div><span class="section-kicker section-kicker--success">Active queue</span><h2 id="release-heading">Ready for Release <small id="releaseCount">(0)</small></h2></div><span class="status-badge status-badge--release">Ready for Release</span></div><div id="releaseEmpty" class="empty-state" hidden><i class="fa-regular fa-folder-open" aria-hidden="true"></i><p></p></div><div id="releaseTableWrap" class="table-scroll" hidden><table><thead><tr><th>Document Number</th><th>Subject</th><th>Requesting Office</th><th>Date Signed</th></tr></thead><tbody id="releaseTableBody"></tbody></table></div></article>
-            <article class="table-card" aria-labelledby="signature-heading"><div class="table-heading"><div><span class="section-kicker section-kicker--warning">Active queue</span><h2 id="signature-heading">Documents for Signature <small id="signatureCount">(0)</small></h2></div><span class="status-badge status-badge--signature">For Signature</span></div><div id="signatureEmpty" class="empty-state" hidden><i class="fa-regular fa-folder-open" aria-hidden="true"></i><p></p></div><div id="signatureTableWrap" class="table-scroll" hidden><table><thead><tr><th>Document Number</th><th>Subject</th><th>Requesting Office</th><th>Date Received</th></tr></thead><tbody id="signatureTableBody"></tbody></table></div></article>
-          </section>
+              </section>
+            </div>
+            <section class="dashboard-workspace__right" aria-label="Documents for signature">
+              <article class="table-card" aria-labelledby="signature-heading"><div class="table-heading"><div><span class="section-kicker section-kicker--warning">Active queue</span><h2 id="signature-heading">Documents for Signature <small id="signatureCount">(0)</small></h2></div><span class="status-badge status-badge--signature">For Signature</span></div><div id="signatureEmpty" class="empty-state" hidden><i class="fa-regular fa-folder-open" aria-hidden="true"></i><p></p></div><div id="signatureTableWrap" class="table-scroll" hidden><table><thead><tr><th>Document Number</th><th>Subject</th><th>Requesting Office</th><th>Date Received</th></tr></thead><tbody id="signatureTableBody"></tbody></table></div></article>
+            </section>
+          </div>
           <div id="errorState" class="error-state" hidden role="alert"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i><p id="errorMessage">Unable to load documents. Please try again.</p></div>
         </section>
 
